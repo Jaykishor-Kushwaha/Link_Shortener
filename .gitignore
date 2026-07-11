@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+.vs/
+publish/
+TestResults/
+
+# Node.js / Angular
+node_modules/
+dist/
+.angular/
+
+# Environment
+.env
+*.env.local
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
