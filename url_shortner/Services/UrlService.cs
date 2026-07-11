@@ -282,7 +282,7 @@ public class UrlService
             {
                 var request = httpContext.Request;
                 var scheme = request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? request.Scheme;
-                var host = request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? request.Host.Value;
+                var host = request.Host.Value;
                 baseUrl = $"{scheme}://{host}";
             }
         }
