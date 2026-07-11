@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Microsoft.AspNetCore.Http;
 using MongoDB.Driver;
 using UrlShortener.Api.Configuration;
 using UrlShortener.Api.Infrastructure;
@@ -15,6 +16,7 @@ public class UrlService
     private readonly AppSettings _settings;
     private readonly ChannelWriter<ClickEvent> _clickChannel;
     private readonly ILogger<UrlService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     private const int MaxRetries = 5;
 
@@ -23,13 +25,15 @@ public class UrlService
         RedisService redis,
         AppSettings settings,
         Channel<ClickEvent> clickChannel,
-        ILogger<UrlService> logger)
+        ILogger<UrlService> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _db = db;
         _redis = redis;
         _settings = settings;
         _clickChannel = clickChannel.Writer;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     /// <summary>
@@ -270,11 +274,24 @@ public class UrlService
 
     private UrlResponse ToResponse(ShortenedUrl url)
     {
+        var baseUrl = _settings.BaseUrl;
+        if (string.IsNullOrEmpty(baseUrl) || baseUrl.Contains("localhost"))
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                var request = httpContext.Request;
+                var scheme = request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? request.Scheme;
+                var host = request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? request.Host.Value;
+                baseUrl = $"{scheme}://{host}";
+            }
+        }
+
         return new UrlResponse
         {
             Id = url.Id,
             ShortCode = url.ShortCode,
-            ShortUrl = $"{_settings.BaseUrl}/{url.ShortCode}",
+            ShortUrl = $"{baseUrl}/{url.ShortCode}",
             LongUrl = url.LongUrl,
             ClickCount = url.ClickCount,
             ExpiresAt = url.ExpiresAt,

@@ -66,6 +66,7 @@ try
     builder.Services.AddSingleton(clickChannel);
 
     // ── Services ──
+    builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<AuthService>();
     builder.Services.AddScoped<UrlService>();
     builder.Services.AddScoped<AnalyticsService>();
