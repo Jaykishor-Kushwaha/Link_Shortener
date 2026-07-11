@@ -53,65 +53,49 @@ public class IntegrationTestBase : IAsyncLifetime
         }
         var redisConnectionString = _redisContainer.GetConnectionString();
 
-        try
-        {
-            _factory = new WebApplicationFactory<Program>()
-                .WithWebHostBuilder(builder =>
+        _factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Testing");
+                builder.ConfigureServices(services =>
                 {
-                    builder.UseEnvironment("Testing");
-                    builder.ConfigureServices(services =>
+                    // Replace AppSettings with test-specific values
+                    services.Remove(services.First(d => d.ServiceType == typeof(AppSettings)));
+                    var testSettings = new AppSettings
                     {
-                        // Replace AppSettings with test-specific values
-                        services.Remove(services.First(d => d.ServiceType == typeof(AppSettings)));
-                        var testSettings = new AppSettings
-                        {
-                            MongoUri = mongoUri,
-                            RedisUrl = redisConnectionString,
-                            Port = 5000,
-                            BaseUrl = "http://localhost:5000",
-                            JwtSecret = "test-jwt-secret-at-least-32-chars!!",
-                            JwtRefreshSecret = "test-refresh-secret-at-least-32ch!!",
-                            JwtAccessExpiry = "15m",
-                            JwtRefreshExpiry = "7d",
-                            RateLimitRedirectMax = 1000,  // Higher for tests
-                            RateLimitRedirectWindowSeconds = 60,
-                            RateLimitCreateMax = 1000,    // Higher for tests
-                            RateLimitCreateWindowSeconds = 60,
-                            CacheTtlSeconds = 300
-                        };
-                        services.AddSingleton(testSettings);
+                        MongoUri = mongoUri,
+                        RedisUrl = redisConnectionString,
+                        Port = 5000,
+                        BaseUrl = "http://localhost:5000",
+                        JwtSecret = "test-jwt-secret-at-least-32-chars!!",
+                        JwtRefreshSecret = "test-refresh-secret-at-least-32ch!!",
+                        JwtAccessExpiry = "15m",
+                        JwtRefreshExpiry = "7d",
+                        RateLimitRedirectMax = 1000,  // Higher for tests
+                        RateLimitRedirectWindowSeconds = 60,
+                        RateLimitCreateMax = 1000,    // Higher for tests
+                        RateLimitCreateWindowSeconds = 60,
+                        CacheTtlSeconds = 300
+                    };
+                    services.AddSingleton(testSettings);
 
-                        // Replace MongoDB context
-                        services.Remove(services.First(d => d.ServiceType == typeof(MongoDbContext)));
-                        var testMongoContext = new MongoDbContext(testSettings);
-                        testMongoContext.CreateIndexesAsync().GetAwaiter().GetResult();
-                        services.AddSingleton(testMongoContext);
+                    // Replace MongoDB context
+                    services.Remove(services.First(d => d.ServiceType == typeof(MongoDbContext)));
+                    var testMongoContext = new MongoDbContext(testSettings);
+                    testMongoContext.CreateIndexesAsync().GetAwaiter().GetResult();
+                    services.AddSingleton(testMongoContext);
 
-                        // Replace Redis
-                        services.Remove(services.First(d => d.ServiceType == typeof(IConnectionMultiplexer)));
-                        var redis = ConnectionMultiplexer.Connect(testSettings.RedisConnectionString);
-                        services.AddSingleton<IConnectionMultiplexer>(redis);
-                    });
+                    // Replace Redis
+                    services.Remove(services.First(d => d.ServiceType == typeof(IConnectionMultiplexer)));
+                    var redis = ConnectionMultiplexer.Connect(testSettings.RedisConnectionString);
+                    services.AddSingleton<IConnectionMultiplexer>(redis);
                 });
-
-            _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false // Important: we want to test the 302, not follow it
             });
-        }
-        catch (Exception ex)
+
+        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("=== WEB APPLICATION FACTORY STARTUP ERROR ===");
-            sb.AppendLine(ex.ToString());
-            if (ex.InnerException != null)
-            {
-                sb.AppendLine("=== INNER EXCEPTION ===");
-                sb.AppendLine(ex.InnerException.ToString());
-            }
-            File.WriteAllText("c:/url_shortner/test_error.txt", sb.ToString());
-            throw;
-        }
+            AllowAutoRedirect = false // Important: we want to test the 302, not follow it
+        });
     }
 
     public async Task DisposeAsync()

@@ -27,3 +27,7 @@ Thumbs.db
 
 # Docker
 *.log
+
+# Debug and temp files
+*error.txt
+mongo_uris.txt

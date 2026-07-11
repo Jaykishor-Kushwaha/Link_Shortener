@@ -72,7 +72,13 @@ try
     builder.Services.AddHostedService<ClickEventBackgroundService>();
 
     // ── JWT Authentication ──
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer();
+
     builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
         .Configure<AppSettings>((options, appSettings) =>
         {

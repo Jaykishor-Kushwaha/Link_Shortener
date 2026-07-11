@@ -18,11 +18,6 @@ public class MongoDbContext
 
     public MongoDbContext(AppSettings settings)
     {
-        try
-        {
-            System.IO.File.AppendAllText("c:/url_shortner/mongo_uris.txt", $"Constructor called. MongoUri: {settings.MongoUri}\n");
-        }
-        catch {}
         var client = new MongoClient(settings.MongoUri);
         Database = client.GetDatabase(new MongoUrl(settings.MongoUri).DatabaseName ?? "url_shortener");
 
