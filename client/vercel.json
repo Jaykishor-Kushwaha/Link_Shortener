@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "dist/url-shortener-client/browser",
   "rewrites": [
     {
       "source": "/api/:path*",
