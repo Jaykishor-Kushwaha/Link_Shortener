@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://YOUR_RENDER_BACKEND_URL/:path*"
+      "destination": "https://link-shortener-qnp0.onrender.com/:path*"
     },
     {
       "source": "/:path*",
